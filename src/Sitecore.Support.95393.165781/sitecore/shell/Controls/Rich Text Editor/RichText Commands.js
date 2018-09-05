@@ -1,4 +1,4 @@
-/* This file is shared between older developer center rich text editor and the new EditorPage, that is used exclusively by Content Editor */
+﻿/* This file is shared between older developer center rich text editor and the new EditorPage, that is used exclusively by Content Editor */
 
 Telerik.Web.UI.Editor.CommandList["Save"] = function(commandName, editor, tool) {
   var form = scGetForm();
@@ -101,10 +101,7 @@ Telerik.Web.UI.Editor.CommandList["SetImageProperties"] = function (commandName,
     oldImage.parentNode.replaceChild(newImage, oldImage);
   });
 
-  var argument = new Telerik.Web.UI.EditorCommandEventArgs("SetImageProperties", null, currentImage);
-  Telerik.Web.UI.Editor.CommandList._getDialogArguments(argument, "IMG", editor, commandName);
-
-  editor.showDialog("ImageProperties", argument, callbackFunction);
+  editor.showDialog("ImageProperties", new window.Telerik.Web.UI.EditorCommandEventArgs("SetImageProperties", null, currentImage), callbackFunction);
 };
 
 Telerik.Web.UI.Editor.CommandList["ImageMapDialog"] = function (commandName, editor, args) {
@@ -141,11 +138,7 @@ function scInsertSitecoreLink(sender, returnValue) {
 
   var d = scEditor.getSelection().getParentElement();
 
-  if ($telerik.isFirefox && d.tagName == "A") {
-    d.parentNode.removeChild(d);
-  } else {
     scEditor.fire("Unlink");
-  }
 
   var text = scEditor.getSelectionHtml();
 
@@ -161,12 +154,37 @@ function scInsertSitecoreLink(sender, returnValue) {
     var regex = /^[\s]*<p>(.+)<\/p>[\s]*$/i;
     var match = regex.exec(text);
     if (match && match.length >= 2) {
-      scEditor.pasteHtml("<p><a href=\"" + returnValue.url + "\">" + match[1] + "</a></p>", "DocumentManager");
+      var linkToPaste = "<a ";
+
+      if (d.hasAttributes()) {
+        var attrs = d.attributes;
+        for (var i = attrs.length - 1; i >= 0; i--) {
+          if (attrs[i].name.indexOf("href") === -1) {
+            linkToPaste = linkToPaste + attrs[i].name + "=\"" + attrs[i].value + "\"" + " ";
+          }
+        }
+      }
+
+      linkToPaste = "<p>" + linkToPaste + "href=\"" + returnValue.url + "\">" + match[1] + "</a></p>";
+
+      scEditor.pasteHtml(linkToPaste, "DocumentManager");
       return;
     }
   }
 
-  scEditor.pasteHtml("<a href=\"" + returnValue.url + "\">" + text + "</a>", "DocumentManager");
+  var linkToPaste = "<a ";
+
+  if (d.hasAttributes()) {
+    var attrs = d.attributes;
+    for (var i = attrs.length - 1; i >= 0; i--) {
+      if (attrs[i].name.indexOf("href") === -1) {
+        linkToPaste = linkToPaste + attrs[i].name + "=\"" + attrs[i].value + "\"" + " ";
+      }
+    }
+  }
+  linkToPaste = linkToPaste + "href=\"" + returnValue.url + "\">" + text + "</a>";
+
+  scEditor.pasteHtml(linkToPaste, "DocumentManager");
 }
 
 Telerik.Web.UI.Editor.CommandList["InsertSitecoreMedia"] = function(commandName, editor, args) {
